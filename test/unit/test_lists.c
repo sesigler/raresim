@@ -123,7 +123,40 @@ void test_uint32_t_sparse_matrix(void)
     ret_p = uint32_t_sparse_martix_get(m1, 20, 0);
     TEST_ASSERT_EQUAL(99, *ret_p);
 
+
+    ret = uint32_t_sparse_matrix_add(m, 10, 99);
+
+    ret = uint32_t_sparse_matrix_add(m, 11, 11);
+
+    ret = uint32_t_sparse_matrix_add(m, 12, 120);
+    ret = uint32_t_sparse_matrix_add(m, 12, 121);
+
+    ret = uint32_t_sparse_matrix_add(m, 13, 130);
+    ret = uint32_t_sparse_matrix_add(m, 13, 131);
+    ret = uint32_t_sparse_matrix_add(m, 13, 132);
+    ret = uint32_t_sparse_matrix_add(m, 13, 133);
+    ret = uint32_t_sparse_matrix_add(m, 13, 134);
+    ret = uint32_t_sparse_matrix_add(m, 13, 135);
+    ret = uint32_t_sparse_matrix_add(m, 13, 136);
+    ret = uint32_t_sparse_matrix_add(m, 13, 137);
+    ret = uint32_t_sparse_matrix_add(m, 13, 138);
+    ret = uint32_t_sparse_matrix_add(m, 13, 139);
+
+    ret_p = uint32_t_sparse_martix_get(m, 13, 3);
+    TEST_ASSERT_EQUAL(133, *ret_p);
+
+    uint32_t_sparse_martix_remove_row(m, 20);
+    TEST_ASSERT_EQUAL(14, m->rows);
+
+    uint32_t old_row_num = m->data[13]->num;
+    ret = uint32_t_sparse_martix_prune_row(m, 13, 0.0);
+    TEST_ASSERT_EQUAL(old_row_num, ret);
+
+    ret = uint32_t_sparse_martix_prune_row(m, 13, 0.75);
+    TEST_ASSERT_TRUE(old_row_num > ret);
+
     uint32_t_sparse_matrix_destroy(&m);
     uint32_t_sparse_matrix_destroy(&m1);
 }
 //}}}
+

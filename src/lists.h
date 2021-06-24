@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+double rand_double();
+
 // UINT32 ARRAY
 struct uint32_t_array
 {
@@ -41,6 +43,14 @@ uint32_t *uint32_t_sparse_martix_get(struct uint32_t_sparse_matrix *m,
                                      uint32_t col);
 uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
                                       FILE *fp);
-
 struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
+
+void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
+                                       uint32_t row);
+
+uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
+                                          uint32_t row,
+                                          double p_of_rem);
+
+struct uint32_t_sparse_matrix *get_matrix(char *file_name);
 #endif

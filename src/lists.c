@@ -10,6 +10,16 @@
 
 #include "lists.h"
 
+#define SPACE 32
+#define NEWLINE 10
+#define ZERO 48
+#define ONE 49
+
+double rand_double()
+{
+    return (double)rand() / (double)RAND_MAX ;
+}
+
 //{{{ uint32_t_array
 //{{{ struct uint32_t_array *uint32_t_array_init(uint32_t init_size)
 struct uint32_t_array *uint32_t_array_init(uint32_t init_size)
@@ -54,6 +64,7 @@ uint32_t uint32_t_array_add(struct uint32_t_array *ua, uint32_t val)
 
     ua->data[ua->num] = val;
     ua->num = ua->num + 1;
+
     return ua->num - 1;
 }
 //}}}
@@ -82,14 +93,15 @@ uint32_t uint32_t_array_set(struct uint32_t_array *ua,
 //{{{uint32_t *uint32_t_array_get(struct uint32_t_array *ua, uint32_t index)
 uint32_t *uint32_t_array_get(struct uint32_t_array *ua, uint32_t index)
 {
-    if (index > ua->size)
+
+    if (index > ua->num)
         return NULL;
     else
         return &(ua->data[index]);
 }
 //}}}
 
-//{"{uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
+//{{{uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
 uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
 {
     if (fwrite(&(ua->num), sizeof(uint32_t), 1, fp) != 1)
@@ -128,7 +140,6 @@ struct uint32_t_array *uint32_t_array_read(FILE *fp)
 //}}}
 
 //{{{ uint32_t_sparse_matrix
-//
 //{{{ struct uint32_t_array *uint32_t_sparse_matrix_init(uint32_t rows
 struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_init(uint32_t rows,
                                                            uint32_t cols)
@@ -201,6 +212,9 @@ uint32_t uint32_t_sparse_matrix_add(struct uint32_t_sparse_matrix *m,
     if (m->rows < row)
         m->rows = row + 1;
 
+    if (m->data[row] == NULL)
+        m->data[row] = uint32_t_array_init(10);
+
     uint32_t ret = uint32_t_array_add(m->data[row], val);
 
     return m->size;
@@ -214,6 +228,10 @@ uint32_t *uint32_t_sparse_martix_get(struct uint32_t_sparse_matrix *m,
 {
     if (row > m->rows)
         return NULL;
+    else if (m->data[row] == NULL)
+        err(1,
+            "ERROR accessing row %d. "
+            "Row is NULL in uint32_t_sparse_martix_get\n", row);
     else
         return uint32_t_array_get(m->data[row], col);
 }
@@ -235,7 +253,8 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
     int i;
     uint32_t v = 0;
     for (i = 0; i < m->rows; ++i) {
-        v += m->data[i]->num;
+        if (m->data[i] != NULL)
+            v += m->data[i]->num;
         sizes[i] = v;
     }
 
@@ -245,7 +264,7 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
     written += m->rows;
 
     for (i = 0; i < m->rows; ++i) {
-        if (m->data[i]->num > 0) {
+        if ((m->data[i] != NULL) && (m->data[i]->num > 0) ){
             if (fwrite(m->data[i]->data,
                        sizeof(uint32_t),
                        m->data[i]->num, fp) != m->data[i]->num)
@@ -258,7 +277,7 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
 }
 //}}}
 
-//{{struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
+//{{{struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
 struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
 {
     struct uint32_t_sparse_matrix *m = 
@@ -309,6 +328,98 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
     free(sizes);
 
     return m;
+}
+//}}}
+
+//{{{void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
+void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
+                                            uint32_t row)
+{
+    if ((row > m->rows) || (m->data[row] == NULL))
+        err(1,
+            "ERROR accessing row %d. "
+            "Row is NULL in uint32_t_sparse_martix_remove_row\n", row);
+
+    uint32_t_array_destroy(&(m->data[row]));
+
+    if (row == m->rows - 1) { //removing the last row
+        int i;
+        for (i = m->rows; i >= 0; --i) {
+            if ((m->data[i] != NULL) && (m->data[i]->num > 0) ) {
+                m->rows = i + 1;
+                break;
+            }
+        }
+    }
+}
+//}}}
+
+//{{{uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
+uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
+                                          uint32_t row,
+                                          double p_of_rem)
+{
+    if ((row > m->rows) || (m->data[row] == NULL) || (m->data[row]->num==0 ))
+        return 0;
+
+
+    struct uint32_t_array *ua = m->data[row];
+
+    uint32_t i, n_i = 0, num = ua->num;
+    for (i = 0; i < num; ++i) {
+        double flip = rand_double();
+        if (flip >= p_of_rem) {
+            ua->data[n_i] = ua->data[i];
+            n_i += 1;
+        } 
+    }
+
+    ua->num = n_i;
+    return ua->num;
+}
+//}}}
+
+//{{{struct uint32_t_sparse_matrix *get_matrix(char *file_name)
+struct uint32_t_sparse_matrix *get_matrix(char *file_name)
+{
+    char *buffer;
+    long length = 0;
+    FILE *f = fopen(file_name, "rb");
+
+    struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
+
+    if (f != NULL) {
+        fseek(f, 0, SEEK_END);
+        length = ftell (f);
+        fseek(f, 0, SEEK_SET);
+        buffer = (char*) malloc ((length+1)*sizeof(char));
+        if (buffer) {
+            fread(buffer, sizeof(char), length, f);
+        }
+        fclose(f);
+    }
+
+    int col = 0, row = 0;
+
+    long i;
+    for (i = 0; i < length; i++) {
+
+        if ( (int)buffer[i] == SPACE  )
+            continue;
+
+        if ( (int)buffer[i] == NEWLINE ) {
+            col = 0;
+            row += 1;
+        }
+
+        if ( (int)buffer[i] == ONE ) {
+            int r = uint32_t_sparse_matrix_add(M, row, col);
+        }
+
+        col += 1;
+    }
+
+    return M;
 }
 //}}}
 
