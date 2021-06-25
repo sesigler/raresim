@@ -379,8 +379,8 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 }
 //}}}
 
-//{{{struct uint32_t_sparse_matrix *get_matrix(char *file_name)
-struct uint32_t_sparse_matrix *get_matrix(char *file_name)
+//{{{struct uint32_t_sparse_matrix *read_matrix(char *file_name)
+struct uint32_t_sparse_matrix *read_matrix(char *file_name)
 {
     char *buffer;
     long length = 0;
@@ -423,4 +423,13 @@ struct uint32_t_sparse_matrix *get_matrix(char *file_name)
 }
 //}}}
 
+void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name)
+{
+    FILE *fp = fopen(file_name, "wb");
+    if (fp == NULL)
+        err(1, "Could not open %s", file_name);
+
+    uint32_t ret = uint32_t_sparse_matrix_write(m, fp);
+    fclose(fp);
+}
 //}}}

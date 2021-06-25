@@ -52,5 +52,7 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,
                                           double p_of_rem);
 
-struct uint32_t_sparse_matrix *get_matrix(char *file_name);
+struct uint32_t_sparse_matrix *read_matrix(char *file_name);
+
+void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name);
 #endif
