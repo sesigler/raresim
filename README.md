@@ -4,8 +4,8 @@ Scalable rare-variant simulations.
 
 To Install:  
   $ Clone git ..  
-  $ cd Path to raresim/. 
-  $ python3 setup.py build_ext -i.  
+  $ cd Path to raresim/    <br/>
+  $ python3 setup.py build_ext -i  <br/>
 
 ```python
 Pythpon example:
