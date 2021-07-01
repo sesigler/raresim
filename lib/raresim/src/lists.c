@@ -102,8 +102,9 @@ uint32_t *uint32_t_array_get(struct uint32_t_array *ua, uint32_t index)
 //}}}
 
 //{{{uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
-uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
+uint32_t uint32_t_array_write(struct uint32_t_array *ua, char *file_name)
 {
+    FILE *fp = fopen(file_name, "wb");
     if (fwrite(&(ua->num), sizeof(uint32_t), 1, fp) != 1)
         err(1, "Could not write uint32_t_array size");
 
@@ -115,8 +116,9 @@ uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
 //}}}
 
 //{{{struct uint32_t_array *uint32_t_array_read(FILE *fp)
-struct uint32_t_array *uint32_t_array_read(FILE *fp)
+struct uint32_t_array *uint32_t_array_read(char *file_name)
 {
+    FILE *fp = fopen(file_name, "rb");
     struct uint32_t_array *ua = 
             (struct uint32_t_array *) malloc(sizeof(struct uint32_t_array));
     if (ua == NULL)
@@ -278,8 +280,9 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
 //}}}
 
 //{{{struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
-struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
+struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
 {
+    FILE *fp = fopen(file_name, "rb");
     struct uint32_t_sparse_matrix *m = 
             (struct uint32_t_sparse_matrix *)
             malloc(sizeof(struct uint32_t_sparse_matrix));
@@ -352,8 +355,20 @@ void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
         }
     }
 }
-//}}}
 
+uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m)
+{
+    return m->rows;
+}
+//}}}
+uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
+                                          uint32_t row)
+{
+    if (m->data[row] == NULL)
+        return 0;   //false
+    else
+        return 1;   //true
+}
 //{{{uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,
