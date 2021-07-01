@@ -55,27 +55,19 @@ void test_uint32_t_array(void)
 
     TEST_ASSERT_EQUAL(20, ua->size);
     TEST_ASSERT_EQUAL(11, ua->num);
+    char *file_name ="test_file.dat";
 
-    FILE *fp = fopen("test_file.dat", "wb");
-    if (fp == NULL)
-        err(1, "Could not open test_file.dat");
 
-    ret = uint32_t_array_write(ua, fp);
+    ret = uint32_t_array_write(ua, file_name);
 
     TEST_ASSERT_EQUAL(1 + ua->num, ret);
 
-    fclose(fp);
-   
-    fp = fopen("test_file.dat", "rb");
-    if (fp == NULL)
-        err(1, "Could not open test_file.dat");
 
 
-    struct uint32_t_array *ub = uint32_t_array_read(fp);
 
+    struct uint32_t_array *ub = uint32_t_array_read(file_name);
     TEST_ASSERT_EQUAL(ua->num, ub->num);
 
-    fclose(fp);
 
     for (i = 0; i < ua->num; ++i) {
         TEST_ASSERT_EQUAL(ua->data[i], ub->data[i]);
@@ -90,14 +82,12 @@ void test_uint32_t_array(void)
 void test_uint32_t_sparse_matrix(void)
 {
     struct uint32_t_sparse_matrix *m = uint32_t_sparse_matrix_init(10, 10);
-
     TEST_ASSERT_EQUAL(10, m->size);
     TEST_ASSERT_EQUAL(0, m->rows);
 
     uint32_t ret = uint32_t_sparse_matrix_add(m, 3, 10);
 
     TEST_ASSERT_EQUAL(10, m->data[3]->data[0]);
-
     ret = uint32_t_sparse_matrix_add(m, 20, 99);
 
     TEST_ASSERT_EQUAL(99, m->data[20]->data[0]);
@@ -107,7 +97,7 @@ void test_uint32_t_sparse_matrix(void)
 
     ret_p = uint32_t_sparse_martix_get(m, 20, 0);
     TEST_ASSERT_EQUAL(99, *ret_p);
- 
+
     FILE *fp = fopen("test_matrix_file.dat", "wb");
     if (fp == NULL)
         err(1, "Could not open test_matrix_file.dat");
@@ -115,10 +105,10 @@ void test_uint32_t_sparse_matrix(void)
     ret = uint32_t_sparse_matrix_write(m, fp);
     fclose(fp);
     TEST_ASSERT_EQUAL(24, ret);
+    char *filename = "test_matrix_file.dat";
 
-    fp = fopen("test_matrix_file.dat", "rb");
-    struct uint32_t_sparse_matrix *m1 = uint32_t_sparse_matrix_read(fp);
-    fclose(fp);
+
+    struct uint32_t_sparse_matrix *m1 = uint32_t_sparse_matrix_read(filename);
 
     ret_p = uint32_t_sparse_martix_get(m1, 20, 0);
     TEST_ASSERT_EQUAL(99, *ret_p);
@@ -159,4 +149,3 @@ void test_uint32_t_sparse_matrix(void)
     uint32_t_sparse_matrix_destroy(&m1);
 }
 //}}}
-
