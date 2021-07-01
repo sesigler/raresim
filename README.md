@@ -1,5 +1,5 @@
 # raresim
-Scalable rare-variant simulations. 
+Python Interface for Scalable rare-variant simulations. 
 
 
 To Install:  
