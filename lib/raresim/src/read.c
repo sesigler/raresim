@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     struct uint32_t_sparse_matrix *m = read_matrix(input_file_name);
     printf("%d\n", m->rows);
 
- 
+
     uint32_t i, total = 0, removed = 0, pruned = 0;
     for (i = 0; i < m->rows; i++) {
         uint32_t size = 0;
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
                 uint32_t_sparse_martix_prune_row(m, i, 0.5);
                 pruned += 1;
             }
-        } 
+        }
         total += 1;
     }
 

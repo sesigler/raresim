@@ -24,7 +24,7 @@ double rand_double()
 //{{{ struct uint32_t_array *uint32_t_array_init(uint32_t init_size)
 struct uint32_t_array *uint32_t_array_init(uint32_t init_size)
 {
-    struct uint32_t_array *ua = 
+    struct uint32_t_array *ua =
             (struct uint32_t_array *) malloc(sizeof(struct uint32_t_array));
     if (ua == NULL)
         err(1, "alloc error in uint32_t_array_init().\n");
@@ -102,22 +102,28 @@ uint32_t *uint32_t_array_get(struct uint32_t_array *ua, uint32_t index)
 //}}}
 
 //{{{uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
-uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp)
+uint32_t uint32_t_array_write(struct uint32_t_array *ua, char *file_name)
 {
+    FILE *fp = fopen(file_name, "wb");
+    if (fp == NULL)
+        err(1, "Could not open %s", file_name);
     if (fwrite(&(ua->num), sizeof(uint32_t), 1, fp) != 1)
         err(1, "Could not write uint32_t_array size");
 
     if (fwrite(ua->data, sizeof(uint32_t), ua->num, fp) != ua->num)
         err(1, "Could not write uint32_t_array data");
-
+    fclose(fp);
     return 1 + ua->num;
 }
 //}}}
 
 //{{{struct uint32_t_array *uint32_t_array_read(FILE *fp)
-struct uint32_t_array *uint32_t_array_read(FILE *fp)
+struct uint32_t_array *uint32_t_array_read(char *file_name)
 {
-    struct uint32_t_array *ua = 
+    FILE *fp = fopen(file_name, "rb");
+    if (fp == NULL)
+        err(1, "Could not open %s", file_name);
+    struct uint32_t_array *ua =
             (struct uint32_t_array *) malloc(sizeof(struct uint32_t_array));
     if (ua == NULL)
         err(1, "alloc error in uint32_t_array_read().\n");
@@ -132,7 +138,7 @@ struct uint32_t_array *uint32_t_array_read(FILE *fp)
         err(1, "alloc error in uint32_t_array_read().\n");
 
     fr = fread(ua->data, sizeof(uint32_t), ua->num, fp);
-
+    fclose(fp);
     return ua;
 }
 ///}}}
@@ -144,7 +150,7 @@ struct uint32_t_array *uint32_t_array_read(FILE *fp)
 struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_init(uint32_t rows,
                                                            uint32_t cols)
 {
-    struct uint32_t_sparse_matrix *m = 
+    struct uint32_t_sparse_matrix *m =
             (struct uint32_t_sparse_matrix *)
             malloc(sizeof(struct uint32_t_sparse_matrix));
     if (m == NULL)
@@ -152,7 +158,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_init(uint32_t rows,
 
     m->size = rows;
     m->rows = 0;
-    m->data =  (struct uint32_t_array **) 
+    m->data =  (struct uint32_t_array **)
         malloc(rows * sizeof(struct uint32_t_array *));
 
     if (m->data == NULL)
@@ -278,25 +284,28 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
 //}}}
 
 //{{{struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
-struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
+struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
 {
-    struct uint32_t_sparse_matrix *m = 
+    FILE *ffp = fopen(file_name, "rb");
+    if (ffp == NULL)
+        err(1, "Could not open %s", file_name);
+    struct uint32_t_sparse_matrix *m =
             (struct uint32_t_sparse_matrix *)
             malloc(sizeof(struct uint32_t_sparse_matrix));
     if (m == NULL)
         err(1, "malloc error in uint32_t_sparse_matrix_read().\n");
 
     uint32_t v;
-    size_t fr = fread(&v, sizeof(uint32_t), 1, fp);
+    size_t fr = fread(&v, sizeof(uint32_t), 1, ffp);
     m->size = v;
     m->rows = v;
 
-    m->data =  (struct uint32_t_array **) 
+    m->data =  (struct uint32_t_array **)
         malloc(m->rows * sizeof(struct uint32_t_array *));
 
 
     uint32_t *sizes = (uint32_t *)malloc(m->rows * sizeof(uint32_t));
-    fr = fread(sizes, sizeof(uint32_t), m->rows, fp);
+    fr = fread(sizes, sizeof(uint32_t), m->rows, ffp);
 
     int i;
     uint32_t last_size = 0;
@@ -306,7 +315,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
         if (curr_size == 0) {
             m->data[i] = NULL;
         } else {
-            m->data[i] = 
+            m->data[i] =
                     (struct uint32_t_array *)
                     malloc(sizeof(struct uint32_t_array));
             if ( m->data[i] == NULL)
@@ -318,7 +327,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
             if (m->data[i]->data == NULL)
                 err(1, "alloc error in uint32_t_sparse_matrix_read().\n");
 
-            fr = fread(m->data[i]->data, sizeof(uint32_t), curr_size, fp);
+            fr = fread(m->data[i]->data, sizeof(uint32_t), curr_size, ffp);
             m->data[i]->num = curr_size;
         }
 
@@ -326,7 +335,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp)
     }
 
     free(sizes);
-
+    fclose(ffp);
     return m;
 }
 //}}}
@@ -352,8 +361,20 @@ void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
         }
     }
 }
-//}}}
 
+uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m)
+{
+    return m->rows;
+}
+//}}}
+uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
+                                          uint32_t row)
+{
+    if (m->data[row] == NULL)
+        return 0;   //false
+    else
+        return 1;   //true
+}
 //{{{uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,
@@ -371,7 +392,7 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
         if (flip >= p_of_rem) {
             ua->data[n_i] = ua->data[i];
             n_i += 1;
-        } 
+        }
     }
 
     ua->num = n_i;
@@ -385,7 +406,8 @@ struct uint32_t_sparse_matrix *read_matrix(char *file_name)
     char *buffer;
     long length = 0;
     FILE *f = fopen(file_name, "rb");
-
+    if (f == NULL)
+        err(1, "Could not open %s", file_name);
     struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
 
     if (f != NULL) {

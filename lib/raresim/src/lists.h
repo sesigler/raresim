@@ -18,8 +18,8 @@ uint32_t uint32_t_array_set(struct uint32_t_array *ua,
                             uint32_t val,
                             uint32_t index);
 uint32_t *uint32_t_array_get(struct uint32_t_array *ua, uint32_t index);
-uint32_t uint32_t_array_write(struct uint32_t_array *ua, FILE *fp);
-struct uint32_t_array *uint32_t_array_read(FILE *fp);
+uint32_t uint32_t_array_write(struct uint32_t_array *ua, char *file_name);
+struct uint32_t_array *uint32_t_array_read(char *file_name);
 
 // UINT32 SPARSE MATRIX
 struct uint32_t_sparse_matrix
@@ -43,10 +43,15 @@ uint32_t *uint32_t_sparse_martix_get(struct uint32_t_sparse_matrix *m,
                                      uint32_t col);
 uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
                                       FILE *fp);
-struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
+struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name);
 
 void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
                                        uint32_t row);
+
+uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m);
+
+uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
+                                          uint32_t row);
 
 uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,

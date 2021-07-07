@@ -1,18 +1,8 @@
-# raresim
-Python Interface for Scalable rare-variant simulations. 
-
-
-To Install:  
-  $ Clone git ..  <br/>
-  $ cd Path to raresim/    <br/>
-  $ python3 setup.py install <br/>
-Python code example: <br/>
-```python
-
 from rareSim import sparse 
 import random
 inps = "lib/raresim/test/data/Simulated_80k_9.controls.haps"
 
+# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 	M = sparse(inps)
 	for row in range( M.rcount()):
@@ -24,4 +14,4 @@ if __name__ == '__main__':
 				M.prune_row(row, 0.5)
 
 	M.write('out.haps.dat')
-  ```
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
