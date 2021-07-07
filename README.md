@@ -3,10 +3,10 @@ Python Interface for Scalable rare-variant simulations.
 
 
 To Install:  
-  $ Clone git ..  
+  $ Clone git ..  <br/>
   $ cd Path to raresim/    <br/>
-  $ python3 setup.py build_ext -i  <br/>
-Python code example:
+  $ python3 setup.py install <br/>
+Python code example: <br/>
 ```python
 
 from rareSim import sparse 
