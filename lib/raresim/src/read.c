@@ -4,6 +4,7 @@
 #include <err.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <zlib.h>
 
 #include "lists.h"
 
