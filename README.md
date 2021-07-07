@@ -6,9 +6,9 @@ To Install:
   $ Clone git ..  
   $ cd Path to raresim/    <br/>
   $ python3 setup.py build_ext -i  <br/>
-
-```python
 Pythpon example:
+```python
+
 from rareSim import sparse 
 import random
 inps = "lib/raresim/test/data/Simulated_80k_9.controls.haps"
