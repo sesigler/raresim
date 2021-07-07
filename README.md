@@ -6,7 +6,7 @@ To Install:
   $ Clone git ..  
   $ cd Path to raresim/    <br/>
   $ python3 setup.py build_ext -i  <br/>
-Pythpon example:
+Python code example:
 ```python
 
 from rareSim import sparse 
