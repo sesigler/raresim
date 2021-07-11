@@ -1,15 +1,15 @@
 # raresim
-Python Interface for Scalable rare-variant simulations. 
+Python Interface for Scalable rare-variant simulations.
 
 
-To Install:  
+##To Install:  
   $ Clone git ..  <br/>
   $ cd Path to raresim/    <br/>
   $ python3 setup.py install <br/>
 Python code example: <br/>
 ```python
 
-from rareSim import sparse 
+from rareSim import sparse
 import random
 inps = "lib/raresim/test/data/Simulated_80k_9.controls.haps"
 
@@ -21,7 +21,26 @@ if __name__ == '__main__':
 			if flip<= 0.3:
 				M.remove_row(row)
 			elif flip <= 0.6:
-				M.prune_row(row, 0.5)
+				M.prune_row(row, 23)
 
 	M.write('out.haps.dat')
   ```
+
+
+## Running C code
+
+### Build
+
+```
+cd lib/raresim/src/
+make
+```
+
+### Run
+
+```
+gunzip test/data/Simulated_80k_9.controls.haps.gz
+./read \
+    -i ../test/data/Simulated_80k_9.controls.haps \
+    -o Simulated_80k_9.controls.haps.dat \
+```
