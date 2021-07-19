@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <err.h>
+#include <sys/errno.h>
 #include <sysexits.h>
 #include <string.h>
 #include <inttypes.h>
 #include <time.h>
+#include <zlib.h>
 
 
 #include "lists.h"
@@ -442,6 +444,25 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 //{{{struct uint32_t_sparse_matrix *read_matrix(char *file_name)
 struct uint32_t_sparse_matrix *read_matrix(char *file_name)
 {
+
+    char comp_suffix[3] = ".gz";
+
+    char *last_3 = (char *) malloc(3);
+
+    char *r = strcpy(last_3, file_name + strlen(file_name) - 3);
+
+    int is_comp =  strncmp(last_3, comp_suffix, 3);
+
+    if (is_comp != 0)
+        return read_uncompressed_matrix(file_name);
+    else
+        return read_compressed_matrix(file_name);
+}
+//}}}
+
+//{{{ struct uint32_t_sparse_matrix *read_uncompressed_matrix(char *file_name)
+struct uint32_t_sparse_matrix *read_uncompressed_matrix(char *file_name)
+{
     char *buffer;
     long length = 0;
     FILE *f = fopen(file_name, "rb");
@@ -460,8 +481,80 @@ struct uint32_t_sparse_matrix *read_matrix(char *file_name)
         fclose(f);
     }
 
-    int col = 0, row = 0;
+    uint32_t col = 0, row = 0;
 
+    uint32_t saw = add_buffer_to_matrix(buffer,
+                                        length,
+                                        M,
+                                        &row,
+                                        &col);
+
+
+    free(buffer);
+
+    return M;
+}
+//}}}
+
+//{{{ struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name)
+#define LENGTH 0x1000
+struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name)
+{
+    gzFile file = gzopen (file_name, "r");
+    if (! file) {
+        fprintf (stderr, "gzopen of '%s' failed: %s.\n", file_name,
+                 strerror (errno));
+            exit (EXIT_FAILURE);
+    }
+
+    char *buffer = (char *) malloc(sizeof(char) * LENGTH);
+    uint32_t col = 0, row = 0;
+    struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
+
+    while (1) {
+        int err;
+        int bytes_read;
+        bytes_read = gzread (file, buffer, LENGTH);
+        if (bytes_read < LENGTH) {
+            if (gzeof (file)) {
+                uint32_t saw = add_buffer_to_matrix(buffer,
+                                                    bytes_read,
+                                                    M,
+                                                    &row,
+                                                    &col);
+
+                break;
+            }
+            else {
+                const char * error_string;
+                error_string = gzerror (file, & err);
+                if (err) {
+                    fprintf (stderr, "Error: %s.\n", error_string);
+                    exit (EXIT_FAILURE);
+                }
+            }
+        }
+
+        uint32_t saw = add_buffer_to_matrix(buffer,
+                                            LENGTH,
+                                            M,
+                                            &row,
+                                            &col);
+
+    }
+    gzclose (file);
+    free(buffer);
+
+    return M;
+}
+
+uint32_t add_buffer_to_matrix(char *buffer,
+                              long length,
+                              struct uint32_t_sparse_matrix *M,
+                              uint32_t *row,
+                              uint32_t *col)
+{
+    uint32_t saw = 0;    
     long i;
     for (i = 0; i < length; i++) {
 
@@ -469,21 +562,24 @@ struct uint32_t_sparse_matrix *read_matrix(char *file_name)
             continue;
 
         if ( (int)buffer[i] == NEWLINE ) {
-            col = 0;
-            row += 1;
+            *col = 0;
+            *row += 1;
+            continue;
         }
 
         if ( (int)buffer[i] == ONE ) {
-            int r = uint32_t_sparse_matrix_add(M, row, col);
+            int r = uint32_t_sparse_matrix_add(M, *row, *col);
         }
 
-        col += 1;
+        saw += 1;
+        *col += 1;
     }
-
-    return M;
+    return saw;
 }
+
 //}}}
 
+//{{{void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name)
 void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name)
 {
     FILE *fp = fopen(file_name, "wb");
@@ -493,4 +589,6 @@ void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name)
     uint32_t ret = uint32_t_sparse_matrix_write(m, fp);
     fclose(fp);
 }
+//}}}
+
 //}}}
