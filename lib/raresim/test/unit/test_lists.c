@@ -162,12 +162,63 @@ void test_uint32_t_sparse_matrix(void)
     ret = uint32_t_sparse_martix_prune_row(m, 13, 3);
     TEST_ASSERT_EQUAL(old_row_num - 3 - 3, ret);
 
-    uint32_t i;
-    for (i=0;i<old_row_num - 3 - 3;++i)
-        printf("%d\n", m->data[13]->data[i]);
-
-
     uint32_t_sparse_matrix_destroy(&m);
     uint32_t_sparse_matrix_destroy(&m1);
 }
 //}}}
+
+
+void test_uint32_t_sparse_matrix_compress_read(void)
+{
+    struct uint32_t_sparse_matrix *m = uint32_t_sparse_matrix_init(10, 10);
+    char *buffer = "1 1 0 0 1 1 0 0 1 1";
+    uint32_t row = 0, col = 0;
+    uint32_t saw = add_buffer_to_matrix(buffer, strlen(buffer), m, &row, &col);
+    TEST_ASSERT_EQUAL(saw, 10);
+    uint32_t *ret_p = uint32_t_sparse_martix_get(m, 0, 0);
+    TEST_ASSERT_EQUAL(*ret_p, 0);
+    ret_p = uint32_t_sparse_martix_get(m, 0, 1);
+    TEST_ASSERT_EQUAL(*ret_p, 1);
+    ret_p = uint32_t_sparse_martix_get(m, 0, 2);
+    TEST_ASSERT_EQUAL(*ret_p, 4);
+
+    char *file_name = "../data/test.haps.gz";
+    struct uint32_t_sparse_matrix *m1 = read_compressed_matrix(file_name);
+
+    uint32_t exp_1[6] = {0,2,4,6,8,9};
+    uint32_t i;
+    for (i=0; i < 6; ++i) {
+        ret_p = uint32_t_sparse_martix_get(m1, 0, i);
+        TEST_ASSERT_EQUAL(exp_1[i], *ret_p);
+    }
+
+    uint32_t exp_2[4] = {2,3,6,7};
+    for (i=0; i < 4; ++i) {
+        ret_p = uint32_t_sparse_martix_get(m1, 2, i);
+        TEST_ASSERT_EQUAL(exp_2[i], *ret_p);
+    }
+
+    uint32_t_sparse_matrix_destroy(&m1);
+
+    struct uint32_t_sparse_matrix *mu = read_matrix("../data/bigger_test.haps");
+    struct uint32_t_sparse_matrix *mc = read_matrix("../data/bigger_test.haps.gz");
+
+
+    TEST_ASSERT_EQUAL(mu->rows, mc->rows);
+
+    uint32_t *ret_pc, *ret_pu;
+    for (i=0; i < mu->rows; i++) {
+        TEST_ASSERT_EQUAL(mu->data[i]->num, mc->data[i]->num); 
+        uint32_t j;
+        for (j=0; j < mu->data[i]->num; j++) {
+            ret_pc = uint32_t_sparse_martix_get(mc, i, j);
+            ret_pu = uint32_t_sparse_martix_get(mu, i, j);
+            TEST_ASSERT_EQUAL(*ret_pc, *ret_pu);
+        }
+
+    }
+
+
+    uint32_t_sparse_matrix_destroy(&mu);
+    uint32_t_sparse_matrix_destroy(&mc);
+}

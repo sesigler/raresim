@@ -60,6 +60,14 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t num_prune);
 
 struct uint32_t_sparse_matrix *read_matrix(char *file_name);
+struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name);
+struct uint32_t_sparse_matrix *read_uncompressed_matrix(char *file_name);
 
 void write_matrix(struct uint32_t_sparse_matrix *m, char *file_name);
+
+uint32_t add_buffer_to_matrix(char *buffer,
+                              long length,
+                              struct uint32_t_sparse_matrix *M,
+                              uint32_t *row,
+                              uint32_t *col);
 #endif
