@@ -42,7 +42,7 @@ if not os.path.exists("lib/zlib-1.2.11/zconf.h"):
 extension = [Extension(
     name="rareSim",
     sources=["rareSim.pyx"] + sources,
-    libraries=['z', 'dl', 'm', 'curl', 'crypto', 'bz2', 'lzma'],
+    libraries=['z', 'dl', 'm', 'bz2', 'lzma'],
     include_dirs=[here, "lib/raresim/src/", "lib/zlib-1.2.11/", ]
 )]
 
