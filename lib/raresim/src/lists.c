@@ -466,11 +466,10 @@ struct uint32_t_sparse_matrix *read_uncompressed_matrix(char *file_name)
     char *buffer;
     long length = 0;
     FILE *f = fopen(file_name, "rb");
+    struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
     if (f == NULL)
         err(1, "Could not open %s", file_name);
-    struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
-
-    if (f != NULL) {
+    else {
         fseek(f, 0, SEEK_END);
         length = ftell (f);
         fseek(f, 0, SEEK_SET);
@@ -554,7 +553,7 @@ uint32_t add_buffer_to_matrix(char *buffer,
                               uint32_t *row,
                               uint32_t *col)
 {
-    uint32_t saw = 0;    
+    uint32_t saw = 0;
     long i;
     for (i = 0; i < length; i++) {
 
