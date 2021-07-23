@@ -11,7 +11,6 @@
 #include <time.h>
 #include <zlib.h>
 
-
 #include "lists.h"
 
 #define SPACE 32
@@ -19,11 +18,30 @@
 #define ZERO 48
 #define ONE 49
 
-double rand_double()
-{
-    return (double)rand() / (double)RAND_MAX ;
-}
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
+//{{{void check_file_read(char *file_name, FILE *fp, size_t exp, size_t obs)
+void check_file_read(char *file_name, FILE *fp, size_t exp, size_t obs)
+{
+    if (exp != obs) {
+        if (feof(fp))
+            errx(EX_IOERR,
+                 "Error reading file \"%s\": End of file",
+                 file_name);
+        err(EX_IOERR, "Error reading file \"%s\"", file_name);
+    }
+}
+//}}}
+
+//{{{double rand_double(void)
+double rand_double(void)
+{
+    return (double)rand() / (double)RAND_MAX;
+}
+//}}}
+
+//{{{void reservoir_sample(uint32_t max, uint32_t N, uint32_t *R)
 void reservoir_sample(uint32_t max, uint32_t N, uint32_t *R)
 {
 
@@ -37,7 +55,9 @@ void reservoir_sample(uint32_t max, uint32_t N, uint32_t *R)
             R[j] = i;
     }
 }
+//}}}
 
+//{{{int uint32_t_compare( const void* a , const void* b )
 int uint32_t_compare( const void* a , const void* b )
 {
     const uint32_t ai = *( const uint32_t* )a;
@@ -50,6 +70,7 @@ int uint32_t_compare( const void* a , const void* b )
     else
         return 0;
 }
+//}}}
 
 //{{{ uint32_t_array
 //{{{ struct uint32_t_array *uint32_t_array_init(uint32_t init_size)
@@ -161,6 +182,8 @@ struct uint32_t_array *uint32_t_array_read(char *file_name)
 
     uint32_t v;
     size_t fr = fread(&v, sizeof(uint32_t), 1, fp);
+    check_file_read(file_name, fp, 1, fr);
+
     ua->num = v;
     ua->size = v;
 
@@ -169,6 +192,7 @@ struct uint32_t_array *uint32_t_array_read(char *file_name)
         err(1, "alloc error in uint32_t_array_read().\n");
 
     fr = fread(ua->data, sizeof(uint32_t), ua->num, fp);
+    check_file_read(file_name, fp, ua->num, fr);
     fclose(fp);
     return ua;
 }
@@ -246,7 +270,7 @@ uint32_t uint32_t_sparse_matrix_add(struct uint32_t_sparse_matrix *m,
         }
     }
 
-    if (m->rows < row)
+    if (m->rows < row + 1)
         m->rows = row + 1;
 
     if (m->data[row] == NULL)
@@ -263,9 +287,7 @@ uint32_t *uint32_t_sparse_martix_get(struct uint32_t_sparse_matrix *m,
                                      uint32_t row,
                                      uint32_t col)
 {
-    if (row > m->rows)
-        return NULL;
-    else if (m->data[row] == NULL)
+    if ((row > m->rows) || (m->data[row] == NULL))
         err(1,
             "ERROR accessing row %d. "
             "Row is NULL in uint32_t_sparse_martix_get\n", row);
@@ -274,6 +296,17 @@ uint32_t *uint32_t_sparse_martix_get(struct uint32_t_sparse_matrix *m,
 }
 //}}}
 
+//{{{uint32_t sparse_martix_get(struct uint32_t_sparse_matrix *m,
+uint32_t sparse_martix_get(struct uint32_t_sparse_matrix *m,
+                                     uint32_t row,
+                                     uint32_t col)
+{
+    uint32_t *v = uint32_t_sparse_martix_get(m, row, col);
+    return *v;
+}
+//}}}
+
+
 //{{{uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
 uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
                                        FILE *fp)
@@ -281,6 +314,11 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
     uint32_t written = 0;
 
     if (fwrite(&(m->rows), sizeof(uint32_t), 1, fp) != 1)
+        err(1, "Could not write uint32_t_sparse_matrix number of rows");
+
+    written += 1;
+
+    if (fwrite(&(m->cols), sizeof(uint32_t), 1, fp) != 1)
         err(1, "Could not write uint32_t_sparse_matrix number of rows");
 
     written += 1;
@@ -317,8 +355,8 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
 //{{{struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(FILE *fp);
 struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
 {
-    FILE *ffp = fopen(file_name, "rb");
-    if (ffp == NULL)
+    FILE *fp = fopen(file_name, "rb");
+    if (fp == NULL)
         err(1, "Could not open %s", file_name);
     struct uint32_t_sparse_matrix *m =
             (struct uint32_t_sparse_matrix *)
@@ -327,16 +365,21 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
         err(1, "malloc error in uint32_t_sparse_matrix_read().\n");
 
     uint32_t v;
-    size_t fr = fread(&v, sizeof(uint32_t), 1, ffp);
+    size_t fr = fread(&v, sizeof(uint32_t), 1, fp);
+    check_file_read(file_name, fp, 1, fr);
     m->size = v;
     m->rows = v;
+
+    fr = fread(&v, sizeof(uint32_t), 1, fp);
+    m->cols = v;
 
     m->data =  (struct uint32_t_array **)
         malloc(m->rows * sizeof(struct uint32_t_array *));
 
 
     uint32_t *sizes = (uint32_t *)malloc(m->rows * sizeof(uint32_t));
-    fr = fread(sizes, sizeof(uint32_t), m->rows, ffp);
+    fr = fread(sizes, sizeof(uint32_t), m->rows, fp);
+
 
     int i;
     uint32_t last_size = 0;
@@ -358,7 +401,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
             if (m->data[i]->data == NULL)
                 err(1, "alloc error in uint32_t_sparse_matrix_read().\n");
 
-            fr = fread(m->data[i]->data, sizeof(uint32_t), curr_size, ffp);
+            fr = fread(m->data[i]->data, sizeof(uint32_t), curr_size, fp);
             m->data[i]->num = curr_size;
         }
 
@@ -366,7 +409,7 @@ struct uint32_t_sparse_matrix *uint32_t_sparse_matrix_read(char *file_name)
     }
 
     free(sizes);
-    fclose(ffp);
+    fclose(fp);
     return m;
 }
 //}}}
@@ -392,10 +435,19 @@ void uint32_t_sparse_martix_remove_row(struct uint32_t_sparse_matrix *m,
         }
     }
 }
+//}}}
 
+//{{{uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m)
 uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m)
 {
     return m->rows;
+}
+//}}}
+
+//{{{uint32_t uint32_t_sparse_martix_num_cols(struct uint32_t_sparse_matrix *m)
+uint32_t uint32_t_sparse_martix_num_cols(struct uint32_t_sparse_matrix *m)
+{
+    return m->cols;
 }
 //}}}
 
@@ -407,6 +459,17 @@ uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
         return 0;   //false
     else
         return 1;   //true
+}
+//}}}
+
+//{{{uint32_t uint32_t_sparse_martix_row_num(struct uint32_t_sparse_matrix *m,
+uint32_t uint32_t_sparse_martix_row_num(struct uint32_t_sparse_matrix *m,
+                                         uint32_t row)
+{
+    if (m->data[row] == NULL)
+        return 0;   //false
+    else
+        return m->data[row]->num;
 }
 //}}}
 
@@ -482,12 +545,12 @@ struct uint32_t_sparse_matrix *read_uncompressed_matrix(char *file_name)
 
     uint32_t col = 0, row = 0;
 
-    uint32_t saw = add_buffer_to_matrix(buffer,
-                                        length,
-                                        M,
-                                        &row,
-                                        &col);
-
+    uint32_t max_col = add_buffer_to_matrix(buffer,
+                                            length,
+                                            M,
+                                            &row,
+                                            &col);
+    M->cols = max_col;
 
     free(buffer);
 
@@ -509,6 +572,7 @@ struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name)
     char *buffer = (char *) malloc(sizeof(char) * LENGTH);
     uint32_t col = 0, row = 0;
     struct uint32_t_sparse_matrix *M = uint32_t_sparse_matrix_init(10, 10);
+    uint32_t max_col = 0;
 
     while (1) {
         int err;
@@ -516,12 +580,12 @@ struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name)
         bytes_read = gzread (file, buffer, LENGTH);
         if (bytes_read < LENGTH) {
             if (gzeof (file)) {
-                uint32_t saw = add_buffer_to_matrix(buffer,
-                                                    bytes_read,
-                                                    M,
-                                                    &row,
-                                                    &col);
-
+                uint32_t curr_max_col = add_buffer_to_matrix(buffer,
+                                                             bytes_read,
+                                                             M,
+                                                             &row,
+                                                             &col);
+                max_col = MAX(max_col, curr_max_col);
                 break;
             }
             else {
@@ -534,26 +598,31 @@ struct uint32_t_sparse_matrix *read_compressed_matrix(char *file_name)
             }
         }
 
-        uint32_t saw = add_buffer_to_matrix(buffer,
-                                            LENGTH,
-                                            M,
-                                            &row,
-                                            &col);
+        uint32_t curr_max_col = add_buffer_to_matrix(buffer,
+                                                     LENGTH,
+                                                     M,
+                                                     &row,
+                                                     &col);
+        max_col = MAX(max_col, curr_max_col);
 
     }
     gzclose (file);
     free(buffer);
 
+    M->cols = max_col;
+
     return M;
 }
+//}}}
 
+//{{{uint32_t add_buffer_to_matrix(char *buffer,
 uint32_t add_buffer_to_matrix(char *buffer,
                               long length,
                               struct uint32_t_sparse_matrix *M,
                               uint32_t *row,
                               uint32_t *col)
 {
-    uint32_t saw = 0;
+    uint32_t max_col = 0;
     long i;
     for (i = 0; i < length; i++) {
 
@@ -562,6 +631,7 @@ uint32_t add_buffer_to_matrix(char *buffer,
 
         if ( (int)buffer[i] == NEWLINE ) {
             *col = 0;
+            max_col = MAX(*col, max_col);
             *row += 1;
             continue;
         }
@@ -570,10 +640,10 @@ uint32_t add_buffer_to_matrix(char *buffer,
             int r = uint32_t_sparse_matrix_add(M, *row, *col);
         }
 
-        saw += 1;
         *col += 1;
+        max_col = MAX(*col, max_col);
     }
-    return saw;
+    return max_col;
 }
 
 //}}}

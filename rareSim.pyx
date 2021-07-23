@@ -1,5 +1,5 @@
 cimport rsdec
-from libc.stdint cimport uintptr_t
+from libc.stdint cimport uintptr_t, uint32_t
 from libcpp cimport str
 
 cdef class arrays:
@@ -32,32 +32,33 @@ cdef class sparse:
     cdef rsdec.uint32_t_sparse_matrix *sparse32
     cdef char *path
     def __init__(self,path):
-        p = to_bytes(path)
-        self.path = p
-        self.sparse32 = rsdec.read_matrix(to_bytes(p))
+        if path != None:
+            p = to_bytes(path)
+            self.path = p
+            self.sparse32 = rsdec.read_matrix(to_bytes(p))
 
-    def spars_matrix_add(self, row, val)-> int:
+    def add(self, row, val)-> int:
         return rsdec.uint32_t_sparse_matrix_add( self.sparse32, row, val)
-    def spars_martix_get(self, row, col) -> uintptr_t:
-        return rsdec.uint32_t_sparse_martix_get( self.sparse32, row, col)
+    def get(self, row, col) -> uint32_t:
+        return rsdec.sparse_martix_get( self.sparse32, row, col)
 
-    def spars_matrix_readbyline(self, byte_filename):
-        cdef char* c_filename = byte_filename
-        self.sparse32= rsdec.uint32_t_sparse_matrix_read( c_filename)
+    def load(self, path):
+        #cdef char* c_filename = byte_filename
+        self.sparse32= rsdec.uint32_t_sparse_matrix_read(to_bytes(path))
 
     def remove_row(self, row)->void:
         rsdec.uint32_t_sparse_martix_remove_row( self.sparse32,  row);
     def prune_row(self , row, num_prune) -> int:
         return rsdec.uint32_t_sparse_martix_prune_row( self.sparse32, row, num_prune)
 
-    def read(self, byte_filename):
-        cdef char* c_filename = byte_filename
-        self.sparse32 =  rsdec.read_matrix( c_filename)
-
-    def rcount(self)-> int:
+    def num_rows(self)-> int:
         return rsdec.uint32_t_sparse_martix_num_rows(self.sparse32)
+    def num_cols(self)-> int:
+        return rsdec.uint32_t_sparse_martix_num_cols(self.sparse32)
     def row_not_null(self, row)->int:
         return rsdec.uint32_t_sparse_martix_not_Null(self.sparse32, row)
+    def row_num(self, row)->int:
+        return rsdec.uint32_t_sparse_martix_row_num(self.sparse32, row)
     def write(self, outfile) -> void:
         byte_file_name = outfile.encode('UTF-8')
         cdef char* c_filename = byte_file_name

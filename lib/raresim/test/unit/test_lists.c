@@ -118,11 +118,12 @@ void test_uint32_t_sparse_matrix(void)
 
     ret = uint32_t_sparse_matrix_write(m, fp);
     fclose(fp);
-    TEST_ASSERT_EQUAL(24, ret);
+    TEST_ASSERT_EQUAL(25, ret);
     char *filename = "test_matrix_file.dat";
 
 
     struct uint32_t_sparse_matrix *m1 = uint32_t_sparse_matrix_read(filename);
+    TEST_ASSERT_EQUAL(m1->cols, m->cols);
 
     ret_p = uint32_t_sparse_martix_get(m1, 20, 0);
     TEST_ASSERT_EQUAL(99, *ret_p);
@@ -167,14 +168,27 @@ void test_uint32_t_sparse_matrix(void)
 }
 //}}}
 
-
-void test_uint32_t_sparse_matrix_compress_read(void)
+//{{{void test_add_buffer_to_matrix(void)
+void test_add_buffer_to_matrix(void)
 {
     struct uint32_t_sparse_matrix *m = uint32_t_sparse_matrix_init(10, 10);
     char *buffer = "1 1 0 0 1 1 0 0 1 1";
     uint32_t row = 0, col = 0;
-    uint32_t saw = add_buffer_to_matrix(buffer, strlen(buffer), m, &row, &col);
-    TEST_ASSERT_EQUAL(saw, 10);
+    uint32_t max_col = add_buffer_to_matrix(buffer,
+                                            strlen(buffer),
+                                            m,
+                                            &row,
+                                            &col);
+    TEST_ASSERT_EQUAL(max_col, 10);
+
+    max_col = add_buffer_to_matrix(buffer,
+                                   strlen(buffer),
+                                   m,
+                                   &row,
+                                   &col);
+    TEST_ASSERT_EQUAL(max_col, 20);
+
+
     uint32_t *ret_p = uint32_t_sparse_martix_get(m, 0, 0);
     TEST_ASSERT_EQUAL(*ret_p, 0);
     ret_p = uint32_t_sparse_martix_get(m, 0, 1);
@@ -182,11 +196,20 @@ void test_uint32_t_sparse_matrix_compress_read(void)
     ret_p = uint32_t_sparse_martix_get(m, 0, 2);
     TEST_ASSERT_EQUAL(*ret_p, 4);
 
+    uint32_t_sparse_matrix_destroy(&m);
+}
+//}}}
+
+//{{{void test_uint32_t_sparse_matrix_compress_read(void)
+void test_uint32_t_sparse_matrix_compress_read(void)
+{
     char *file_name = "../data/test.haps.gz";
     struct uint32_t_sparse_matrix *m1 = read_compressed_matrix(file_name);
+    TEST_ASSERT_EQUAL(10, m1->cols);
 
     uint32_t exp_1[6] = {0,2,4,6,8,9};
     uint32_t i;
+    uint32_t *ret_p;
     for (i=0; i < 6; ++i) {
         ret_p = uint32_t_sparse_martix_get(m1, 0, i);
         TEST_ASSERT_EQUAL(exp_1[i], *ret_p);
@@ -201,7 +224,11 @@ void test_uint32_t_sparse_matrix_compress_read(void)
     uint32_t_sparse_matrix_destroy(&m1);
 
     struct uint32_t_sparse_matrix *mu = read_matrix("../data/bigger_test.haps");
-    struct uint32_t_sparse_matrix *mc = read_matrix("../data/bigger_test.haps.gz");
+    TEST_ASSERT_EQUAL(55, mu->cols);
+
+    struct uint32_t_sparse_matrix *mc =
+            read_matrix("../data/bigger_test.haps.gz");
+    TEST_ASSERT_EQUAL(55, mc->cols);
 
 
     TEST_ASSERT_EQUAL(mu->rows, mc->rows);
@@ -222,3 +249,4 @@ void test_uint32_t_sparse_matrix_compress_read(void)
     uint32_t_sparse_matrix_destroy(&mu);
     uint32_t_sparse_matrix_destroy(&mc);
 }
+//}}
