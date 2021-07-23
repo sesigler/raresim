@@ -1,17 +1,15 @@
 from rareSim import sparse 
-import random
-inps = "lib/raresim/test/data/Simulated_80k_9.controls.haps"
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-	M = sparse(inps)
-	for row in range( M.rcount()):
-		if (M.row_not_null(row)==1):
-			flip = random.uniform(0, 1)
-			if flip<= 0.3:
-				M.remove_row(row)
-			elif flip <= 0.6:
-				M.prune_row(row, 0.5)
+def main():
+    hap = "lib/raresim/test/data/Simulated_80k_9.controls.haps.gz"
+    M = sparse(hap)
+    print(M.num_rows(), M.num_cols())
+    for row in range( M.num_rows()):
+        alts = []
+        for i in range(M.row_num(row)):
+            alts.append(M.get(row,i))
+        print(row, alts)
 
-	M.write('out.haps.dat')
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    M.write('out.haps.dat')
+
+if __name__ == '__main__': main()
