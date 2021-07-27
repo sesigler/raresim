@@ -5,10 +5,15 @@ CFLAGS=-g
 CFLAGS+=-D_FILE_OFFSET_BITS=64 -Werror -Wuninitialized
 CC=gcc
 
+all: read convert
+
 %.o: %.c 
 	$(CC) -c -o $@ $< $(CFLAGS) -I../../zlib-1.2.11
 
 read: read.o lists.o
+	$(CC) -o $@ $^ $(CFLAGS) -L../../zlib-1.2.11 -lz
+
+convert: convert.o lists.o
 	$(CC) -o $@ $^ $(CFLAGS) -L../../zlib-1.2.11 -lz
 
 clean:

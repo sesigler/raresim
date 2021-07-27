@@ -348,6 +348,7 @@ uint32_t uint32_t_sparse_matrix_write(struct uint32_t_sparse_matrix *m,
         }
     }
 
+    free(sizes);
     return written;
 }
 //}}}
@@ -510,11 +511,13 @@ struct uint32_t_sparse_matrix *read_matrix(char *file_name)
 
     char comp_suffix[3] = ".gz";
 
-    char *last_3 = (char *) malloc(3);
+    char *last_3 = (char *) malloc(4);
 
     char *r = strcpy(last_3, file_name + strlen(file_name) - 3);
 
     int is_comp =  strncmp(last_3, comp_suffix, 3);
+
+    free(last_3);
 
     if (is_comp != 0)
         return read_uncompressed_matrix(file_name);
