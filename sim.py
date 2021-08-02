@@ -7,8 +7,8 @@ import gzip
 def get_bin(bins, val):
     for i in range(len(bins)):
         if val >= bins[i][0] and val <= bins[i][1]:
-            break
-    return i
+            return i
+    return i+1
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -77,7 +77,15 @@ def main():
 
     print('Input allele frequency distribution:')
     for bin_id in range(len(bin_h)):
-        print(bins[bin_id], len(bin_h[bin_id]))
+        if bin_id < len(bins):
+            print('[' + str(bins[bin_id][0]) + ',' \
+            	  + str(bins[bin_id][1]) + ']\t' \
+            	  + str(bins[bin_id][2]) + '\t' \
+		  + str(len(bin_h[bin_id])))
+        else:
+            print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
+            	  +  '\t' \
+		  + str(len(bin_h[bin_id])))
 
     R = []
 
@@ -85,6 +93,12 @@ def main():
     print('New allele frequency distribution:')
 
     for bin_id in reversed(range(len(bin_h))):
+
+	# The last binn contains those variants with ACs 
+	# greater than the bin size, and we keep all of them
+        if bin_id == len(bins):
+            continue
+
         need = bins[bin_id][2]
         have = len(bin_h[bin_id])
 
@@ -116,9 +130,26 @@ def main():
                 R.remove(row_id)
 
     all_kept_rows = []
+#    for bin_id in range(len(bin_h)):
+#        if bin_id < len(bins):
+#            print(bins[bin_id], len(bin_h[bin_id]))
+#        else:
+#            print(len(bin_h[bin_id]))
+#        all_kept_rows += bin_h[bin_id]
+
     for bin_id in range(len(bin_h)):
-        print(bins[bin_id], len(bin_h[bin_id]))
+        if bin_id < len(bins):
+            print('[' + str(bins[bin_id][0]) + ',' \
+            	  + str(bins[bin_id][1]) + ']\t' \
+            	  + str(bins[bin_id][2]) + '\t' \
+		  + str(len(bin_h[bin_id])))
+        else:
+            print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
+            	  +  '\t' \
+		  + str(len(bin_h[bin_id])))
         all_kept_rows += bin_h[bin_id]
+
+
 
     all_kept_rows.sort()
 
