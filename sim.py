@@ -2,6 +2,7 @@ from rareSim import sparse
 import random
 import argparse
 import gzip
+import sys
 
 # could be slow with 100+ bins, optimizing with binary search would help
 def get_bin(bins, val):
@@ -20,8 +21,15 @@ def get_args():
 
     parser.add_argument('-b',
                         dest='exp_bins',
-                        required=True,
                         help='Input expected bin sizes')
+
+    parser.add_argument('--functional_bins',
+                        dest='exp_fun_bins',
+                        help='Input expected bin sizes for functional variants')
+
+    parser.add_argument('--synonymous_bins',
+                        dest='exp_syn_bins',
+                        help='Input expected bin sizes for synonymous variants')
 
     parser.add_argument('-l',
                         dest='input_legend',
@@ -42,56 +50,7 @@ def get_args():
 
     return args
 
-def main():
-    args = get_args()
-
-    bins = []
-
-    header = None
-    for l in open(args.exp_bins):
-        A = l.rstrip().split()
-
-        if header == None:
-            header = A
-        else:
-            bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
-
-    M = sparse(None)
-    M.load(args.sparse_matrix)
-
-    bin_h = {}
-    row_i = 0
-    for row in range( M.num_rows()):
-        row_num = M.row_num(row)
-
-        if row_num > 0:
-
-            bin_id = get_bin(bins, row_num)
-
-            if bin_id not in bin_h:
-                bin_h[bin_id] = []
-
-            bin_h[bin_id].append(row_i)
-
-        row_i += 1
-
-    print('Input allele frequency distribution:')
-    for bin_id in range(len(bin_h)):
-        if bin_id < len(bins):
-            print('[' + str(bins[bin_id][0]) + ',' \
-            	  + str(bins[bin_id][1]) + ']\t' \
-            	  + str(bins[bin_id][2]) + '\t' \
-		  + str(len(bin_h[bin_id])))
-        else:
-            print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
-            	  +  '\t' \
-		  + str(len(bin_h[bin_id])))
-
-    R = []
-
-    print()
-    print('New allele frequency distribution:')
-
+def prune_bins(bin_h, bins, R, M):
     for bin_id in reversed(range(len(bin_h))):
 
 	# The last binn contains those variants with ACs 
@@ -129,14 +88,8 @@ def main():
                 bin_h[bin_id].append(row_id)
                 R.remove(row_id)
 
-    all_kept_rows = []
-#    for bin_id in range(len(bin_h)):
-#        if bin_id < len(bins):
-#            print(bins[bin_id], len(bin_h[bin_id]))
-#        else:
-#            print(len(bin_h[bin_id]))
-#        all_kept_rows += bin_h[bin_id]
 
+def print_bin(bin_h, bins):
     for bin_id in range(len(bin_h)):
         if bin_id < len(bins):
             print('[' + str(bins[bin_id][0]) + ',' \
@@ -147,9 +100,138 @@ def main():
             print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
             	  +  '\t' \
 		  + str(len(bin_h[bin_id])))
-        all_kept_rows += bin_h[bin_id]
+
+def read_legend(legend_file_name):
+    header = None
+    legend = []
+    for l in open(legend_file_name):
+        A = l.rstrip().split()
+
+        if header == None:
+            header = A
+        else:
+            legend.append( dict(zip(header,A)))
+
+    return header, legend
+
+def read_expected(expected_file_name):
+
+    bins = []
+
+    header = None
+    for l in open(expected_file_name):
+        A = l.rstrip().split()
+
+        if header == None:
+            header = A
+        else:
+            bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
+
+    return bins
+
+def main():
+    args = get_args()
+
+    func_split = False
+
+    if args.exp_bins is None:
+        if args.exp_fun_bins is not None \
+            and args.exp_syn_bins is not None:
+            func_split = True
+        else:
+            sys.exit('If variants are split by functional/synonymous ' + \
+                     'files must be provided for --functional_bins ' + \
+                     'and --synonymous_bins')
+
+    bins = None
+
+    if func_split:
+        bins = {}
+        bins['fun'] = read_expected(args.exp_fun_bins)
+        bins['syn'] = read_expected(args.exp_syn_bins)
+    else:
+        bins = read_expected(args.exp_bins)
+
+    legend_header, legend = read_legend(args.input_legend)
+
+    if func_split and 'fun' not in legend_header:
+        sys.exit('If variants are split by functional/synonymous ' + \
+                 'the legend file must have a column named "fun" ' + \
+                 'that specifies "fun" or "syn" for each site')
+
+    M = sparse(None)
+    M.load(args.sparse_matrix)
+
+    bin_h = {}
+
+    if func_split:
+        bin_h['fun'] = {}
+        bin_h['syn'] = {}
+
+    row_i = 0
+    for row in range( M.num_rows()):
+        row_num = M.row_num(row)
+
+        if row_num > 0:
+            if func_split:
+                bin_id = get_bin(bins[legend[row_i]['fun']], row_num)
+            else:
+                bin_id = get_bin(bins, row_num)
+
+            target_map = bin_h
+
+            if func_split:
+                target_map = bin_h[legend[row_i]['fun']]
+
+            if bin_id not in target_map:
+                target_map[bin_id] = []
+
+            target_map[bin_id].append(row_i)
+
+        row_i += 1
+
+    print('Input allele frequency distribution:')
+
+    if func_split:
+        print('Functional')
+        print_bin(bin_h['fun'], bins['fun'])
+        print('\nSynonymous')
+        print_bin(bin_h['syn'], bins['syn'])
+    else:
+        print_bin(bin_h, bins)
+
+    R = []
+
+    print()
+    print('New allele frequency distribution:')
 
 
+    if func_split:
+        R = {'fun':[], 'syn':[]}
+        prune_bins(bin_h['fun'], bins['fun'], R['fun'], M)
+        prune_bins(bin_h['syn'], bins['syn'], R['syn'], M)
+    else:
+        prune_bins(bin_h, bins, R, M)
+    
+    all_kept_rows = []
+
+    if func_split:
+        print('Functional')
+        print_bin(bin_h['fun'], bins['fun'])
+
+        for bin_id in range(len(bin_h['fun'])):
+            all_kept_rows += bin_h['fun'][bin_id]
+
+        print('\nSynonymous')
+        print_bin(bin_h['syn'], bins['syn'])
+
+        for bin_id in range(len(bin_h['syn'])):
+            all_kept_rows += bin_h['syn'][bin_id]
+    else:
+        print_bin(bin_h, bins)
+
+        for bin_id in range(len(bin_h)):
+            all_kept_rows += bin_h[bin_id]
 
     all_kept_rows.sort()
 

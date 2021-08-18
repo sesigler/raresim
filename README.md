@@ -70,6 +70,73 @@ Writing new variant legend
 Writing new haplotype file............
 ```
 
+### Simulations that consider variant affect (functional/synonymous)
+
+Simulations can independently be considered variants by their impact if 
+1. the legend file (`-l` option) contains a column labeled fun where functional
+variants have the value fun, and synonymous variants have the value syn.
+1. separate expected bin size files are given for functional
+(`--functional_bins`) and synonymous (`--synonymous_bins`) variants
+
+```
+$ python convert.py \
+    -i lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.haps.gz \
+    -o chr19.block37.NFE.sim100.stratified.haps.gz.sm
+
+$ python sim.py \
+    -m chr19.block37.NFE.sim100.stratified.haps.gz.sm \
+    --functional_bins lib/raresim/test/data/Expected_variants_functional.txt \
+    --synonymous_bins lib/raresim/test/data/Expected_variants_synonymous.txt \
+    -l lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.legend \
+    -L new.legend \
+    -H new.hap.gz
+
+Input allele frequency distribution:
+Functional
+[1,1]   610.213692400324    686
+[2,2]   199.745137641156    351
+[3,5]   185.434393821117    598
+[6,10]  73.1664075520905    472
+[11,20] 37.132127271035 432
+[21,220]    34.4401706091422    768
+[221,440]   1.98761248740743    10
+[441, ]     30
+
+Synonymous
+[1,1]   215.389082675548    276
+[2,2]   73.1166493377018    140
+[3,5]   73.6972836211026    240
+[6,10]  33.4315406970657    181
+[11,20] 19.1432926816897    181
+[21,220]    20.2848171294807    331
+[221,440]   1.38678884898772    11
+[441, ]     20
+
+New allele frequency distribution:
+Functional
+[1,1]   610.213692400324    607
+[2,2]   199.745137641156    217
+[3,5]   185.434393821117    178
+[6,10]  73.1664075520905    82
+[11,20] 37.132127271035 40
+[21,220]    34.4401706091422    41
+[221,440]   1.98761248740743    1
+[441, ]     30
+
+Synonymous
+[1,1]   215.389082675548    220
+[2,2]   73.1166493377018    66
+[3,5]   73.6972836211026    63
+[6,10]  33.4315406970657    31
+[11,20] 19.1432926816897    20
+[21,220]    20.2848171294807    20
+[221,440]   1.38678884898772    1
+[441, ]     20
+
+Writing new variant legend
+
+Writing new haplotype file...........
+```
 
 Python code example: <br/>
 ```python
