@@ -61,7 +61,7 @@ def prune_bins(bin_h, bins, R, M):
         need = bins[bin_id][2]
         have = len(bin_h[bin_id])
 
-        if have > need:
+        if have > need + 3:
             p_rem = 1 - float(need)/float(have)
             row_ids_to_rem = []
             for i in range(have):
