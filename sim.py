@@ -61,7 +61,7 @@ def prune_bins(bin_h, bins, R, M):
         need = bins[bin_id][2]
         have = len(bin_h[bin_id])
 
-        if have > need + 3:
+        if abs(have - need) > 3:
             p_rem = 1 - float(need)/float(have)
             row_ids_to_rem = []
             for i in range(have):
@@ -71,8 +71,16 @@ def prune_bins(bin_h, bins, R, M):
             for row_id in row_ids_to_rem:
                 R.append(row_id)
                 bin_h[bin_id].remove(row_id)
-        elif have < need:
+        elif have < need - 3:
+            if R < need - have:
+                sys.exit('ERROR: ' + 'Current bin has ' + str(have) \
+                         + ' variant(s). Model needs ' + str(need) \
+                         + ' variant(s). Only ' + str(len(R)) + ' variant(s)' \
+                         + ' are avaiable')
+                         str(have)
+
             p_add = float(need - have)/float(len(R))
+
             row_ids_to_add = []
             for i in range(len(R)):
                 flip = random.uniform(0, 1)
