@@ -77,7 +77,6 @@ def prune_bins(bin_h, bins, R, M):
                          + ' variant(s). Model needs ' + str(need) \
                          + ' variant(s). Only ' + str(len(R)) + ' variant(s)' \
                          + ' are avaiable')
-                         str(have)
 
             p_add = float(need - have)/float(len(R))
 
