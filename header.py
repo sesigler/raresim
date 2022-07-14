@@ -111,13 +111,14 @@ def print_bin(bin_h, bins):
 def read_legend(legend_file_name):
     header = None
     legend = []
-    for l in open(legend_file_name):
-        A = l.rstrip().split()
+    with open(legend_file_name) as f:
+        for l in f:
+            A = l.rstrip().split()
 
-        if header == None:
-            header = A
-        else:
-            legend.append( dict(zip(header,A)))
+            if header == None:
+                header = A
+            else:
+                legend.append( dict(zip(header,A)))
 
     return header, legend
 
@@ -126,13 +127,14 @@ def read_expected(expected_file_name):
     bins = []
 
     header = None
-    for l in open(expected_file_name):
-        A = l.rstrip().split()
+    with open(expected_file_name) as f:
+        for l in f:
+            A = l.rstrip().split()
 
-        if header == None:
-            header = A
-        else:
-            bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
+            if header == None:
+                header = A
+            else:
+                bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
 
     return bins
 

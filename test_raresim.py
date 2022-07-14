@@ -6,7 +6,7 @@ class testRaresim(unittest.TestCase):
     
     def test_readExpected(self):
         bins = read_expected('./testData/testBins.txt')
-        self.assertEqual(bins[3], (3,5,2))
+        self.assertEqual(bins[2], (3,5,2))
 
     def test_getBin(self):
         bins = read_expected('./testData/testBins.txt')
