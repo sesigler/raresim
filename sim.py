@@ -4,8 +4,6 @@ import sys
 from header import *
 
 # could be slow with 100+ bins, optimizing with binary search would help
-
-
 def main():
     args = get_args()
 
@@ -29,20 +27,9 @@ def main():
     bin_h = assign_bins(M, bins, legend, func_split)
 
     print('Input allele frequency distribution:')
-
-    if func_split:
-        print('Functional')
-        print_bin(bin_h['fun'], bins['fun'])
-        print('\nSynonymous')
-        print_bin(bin_h['syn'], bins['syn'])
-    else:
-        print_bin(bin_h, bins)
+    print_frequency_distribution(bins, bin_h, func_split)
 
     R = []
-
-    print()
-    print('New allele frequency distribution:')
-
 
     if func_split:
         R = {'fun':[], 'syn':[]}
@@ -50,28 +37,12 @@ def main():
         prune_bins(bin_h['syn'], bins['syn'], R['syn'], M)
     else:
         prune_bins(bin_h, bins, R, M)
-    
-    all_kept_rows = []
 
-    if func_split:
-        print('Functional')
-        print_bin(bin_h['fun'], bins['fun'])
+    print()
+    print('New allele frequency distribution:')
+    print_frequency_distribution(bins, bin_h, func_split)
 
-        for bin_id in range(len(bin_h['fun'])):
-            all_kept_rows += bin_h['fun'][bin_id]
-
-        print('\nSynonymous')
-        print_bin(bin_h['syn'], bins['syn'])
-
-        for bin_id in range(len(bin_h['syn'])):
-            all_kept_rows += bin_h['syn'][bin_id]
-    else:
-        print_bin(bin_h, bins)
-
-        for bin_id in range(len(bin_h)):
-            all_kept_rows += bin_h[bin_id]
-
-    all_kept_rows.sort()
+    all_kept_rows = get_all_kept_rows(bin_h, func_split)
 
     print()
     print('Writing new variant legend')

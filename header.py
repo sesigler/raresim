@@ -238,3 +238,31 @@ def write_hap(all_kept_rows, output_file, M):
 
             i+=1
     print()
+
+
+
+def print_frequency_distribution(bins, bin_h, func_split):
+    if func_split:
+        print('Functional')
+        print_bin(bin_h['fun'], bins['fun'])
+        print('\nSynonymous')
+        print_bin(bin_h['syn'], bins['syn'])   
+    else:
+        print_bin(bin_h, bins)
+
+
+def get_all_kept_rows(bin_h, func_split):
+    all_kept_rows = []
+    
+    if func_split:
+
+        for bin_id in range(len(bin_h['fun'])):
+            all_kept_rows += bin_h['fun'][bin_id]
+        for bin_id in range(len(bin_h['syn'])):
+            all_kept_rows += bin_h['syn'][bin_id]
+    else:
+        for bin_id in range(len(bin_h)):
+            all_kept_rows += bin_h[bin_id]
+
+    all_kept_rows.sort()
+    return all_kept_rows
