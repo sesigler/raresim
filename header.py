@@ -1,9 +1,24 @@
 import argparse
 from os import SEEK_END
 import random
-import sys
 import gzip
+from heapq import merge
 
+class Error(Exception):
+    """Base class for other exceptions"""
+    pass
+
+class DifferingLengths(Error):
+    """Raised when two file lengths differ"""
+    pass
+
+class MissingColumn(Error):
+    """Raised when legend is missing a column"""
+    pass
+
+class MissingProbs(Error):
+    """Raised when legend is missing probs column"""
+    pass
 
 
 def get_bin(bins, val):
@@ -34,12 +49,10 @@ def get_args():
 
     parser.add_argument('-l',
                         dest='input_legend',
-                        required=True,
                         help='Input variant site legend')
 
     parser.add_argument('-L',
                         dest='output_legend',
-                        required=True,
                         help='Output variant site legend')
 
     parser.add_argument('-H',
@@ -47,11 +60,27 @@ def get_args():
                         required=True,
                         help='Output compress hap file')
 
+    parser.add_argument('--f_only',
+                        dest='fun_bins_only',
+                        help='Input expected bin sizes for only functional variants')
+    
+    parser.add_argument('--s_only',
+                        dest='syn_bins_only',
+                        help='Input expected bin sizes for synonymous variants only')
+    
+    parser.add_argument('-z',
+                        action='store_true',
+                        help='Rows of zeros are not removed')
+
+    parser.add_argument('-prob',
+                        action='store_true',
+                        help='Rows are pruned allele by allele given a probability of removal')
+
     args = parser.parse_args()
 
     return args
 
-def prune_bins(bin_h, bins, R, M, seed):
+def prune_bins(bin_h, bins, R, M):
     for bin_id in reversed(range(len(bin_h))):
 
 	# The last binn contains those variants with ACs 
@@ -74,7 +103,7 @@ def prune_bins(bin_h, bins, R, M, seed):
                 bin_h[bin_id].remove(row_id)
         elif have < need - 3:
             if R < need - have:
-                sys.exit('ERROR: ' + 'Current bin has ' + str(have) \
+                raise Exception('ERROR: ' + 'Current bin has ' + str(have) \
                          + ' variant(s). Model needs ' + str(need) \
                          + ' variant(s). Only ' + str(len(R)) + ' variant(s)' \
                          + ' are avaiable')
@@ -91,7 +120,7 @@ def prune_bins(bin_h, bins, R, M, seed):
                                                  bins[bin_id][1]))
                 num_to_rem = M.row_num(row_id) - num_to_keep
                 left = M.prune_row(row_id, num_to_rem)
-                assert  num_to_keep == left
+                assert num_to_keep == left
 
                 bin_h[bin_id].append(row_id)
                 R.remove(row_id)
@@ -143,32 +172,44 @@ def read_expected(expected_file_name):
 
 def get_split(args):
     func_split = False
-
-    if args.exp_bins is None:
+    fun_only = False
+    syn_only = False
+    
+    if args.exp_bins is None and not args.prob:
         if args.exp_fun_bins is not None \
             and args.exp_syn_bins is not None:
             func_split = True
+        elif args.fun_bins_only is not None:
+            fun_only = True
+        elif args.syn_bins_only is not None:
+            syn_only = True
         else:
-            sys.exit('If variants are split by functional/synonymous ' + \
+            raise Exception('If variants are split by functional/synonymous ' + \
                      'files must be provided for --functional_bins ' + \
                      'and --synonymous_bins')
-    return func_split
+    return func_split, fun_only, syn_only
 
-
-def verify_legend(legend, legend_header, M, split):
+def verify_legend(legend, legend_header, M, split, probs):
     if split and 'fun' not in legend_header:
-        sys.exit('If variants are split by functional/synonymous ' + \
+        raise MissingColumn('If variants are split by functional/synonymous ' + \
                  'the legend file must have a column named "fun" ' + \
                  'that specifies "fun" or "syn" for each site')
     if M.num_rows() != len(legend):
-        sys.exit('Legend and haplotype files do not match in length')
+        raise DifferingLengths("Lengths do not match")
+
+    if probs and 'prob' not in legend_header:
+        raise MissingProbs('The legend file needs to have a "prob" column ' + \
+                'to indicate the pruning probability of a given row ')
+    
 
 
 
-def assign_bins(M, bins, legend, func_split):
+def assign_bins(M, bins, legend, func_split, fun_only, syn_only, z):
     bin_h = {}
 
-    if func_split:
+    func_split,fun_only,syn_only
+
+    if func_split or fun_only or syn_only:
         bin_h['fun'] = {}
         bin_h['syn'] = {}
 
@@ -176,7 +217,7 @@ def assign_bins(M, bins, legend, func_split):
     for row in range( M.num_rows()):
         row_num = M.row_num(row)
 
-        if row_num > 0:
+        if row_num > 0 or z:
             if func_split:
                 bin_id = get_bin(bins[legend[row_i]['fun']], row_num)
             else:
@@ -185,7 +226,7 @@ def assign_bins(M, bins, legend, func_split):
             #Depending on split status, either append to bin_h or to just the annotated dictionary
             target_map = bin_h
 
-            if func_split:
+            if func_split or syn_only or fun_only:
                 target_map = bin_h[legend[row_i]['fun']]
 
             if bin_id not in target_map:
@@ -244,28 +285,91 @@ def write_hap(all_kept_rows, output_file, M):
 
 
 
-def print_frequency_distribution(bins, bin_h, func_split):
+def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
     if func_split:
         print('Functional')
         print_bin(bin_h['fun'], bins['fun'])
         print('\nSynonymous')
         print_bin(bin_h['syn'], bins['syn'])   
+    elif fun_only:
+        print('Functional')
+        print_bin(bin_h['fun'], bins)
+    elif syn_only:
+        print('Synonymous')
+        print_bin(bin_h['syn'], bins)
     else:
         print_bin(bin_h, bins)
 
 
-def get_all_kept_rows(bin_h, func_split):
+def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z):
     all_kept_rows = []
-    
-    if func_split:
 
+    if func_split:
         for bin_id in range(len(bin_h['fun'])):
             all_kept_rows += bin_h['fun'][bin_id]
         for bin_id in range(len(bin_h['syn'])):
             all_kept_rows += bin_h['syn'][bin_id]
+
+    elif fun_only or syn_only:
+        for bin_id in bin_h['fun']:
+            all_kept_rows += bin_h['fun'][bin_id]
+        for bin_id in bin_h['syn']:
+            all_kept_rows += bin_h['syn'][bin_id]
+
     else:
         for bin_id in range(len(bin_h)):
             all_kept_rows += bin_h[bin_id]
 
     all_kept_rows.sort()
+    if z:
+        all_kept_rows = list(merge(all_kept_rows, sorted(R)))
     return all_kept_rows
+
+
+def get_expected_bins(args, func_split, fun_only, syn_only):
+    bins = None
+    if func_split:
+        bins = {}
+        bins['fun'] = read_expected(args.exp_fun_bins)
+        bins['syn'] = read_expected(args.exp_syn_bins)
+    elif syn_only:
+        bins = read_expected(args.syn_bins_only)
+    elif fun_only:
+        bins = read_expected(args.fun_bins_only)
+    else:
+        bins = read_expected(args.exp_bins)
+    return bins
+
+
+def probSim(args, all_rows, legend, M):
+    num_rows = len(all_rows)
+    step = int(num_rows/10)
+    i = 0
+    with gzip.open(args.output_hap, 'wb') as f:
+            #Loop through all kept rows
+            for row_i in all_rows:
+                
+                row = []
+                #Get the corresponding row from the sparse matrix
+                for col_i in range(M.row_num(row_i)):
+                    flip = random.uniform(0, 1)
+                    if legend[row_i]['prob'] == '.':
+                        row.append(M.get(row_i, col_i))
+                    elif flip > float(legend[row_i]['prob']):
+                        row.append(M.get(row_i, col_i))
+                #O will be a list of zeros, one for each column in the sparse matrix
+                O = ['0'] * M.num_cols()
+                #Assign ones in the row
+                for col_i in row:
+                    O[col_i] = '1'
+
+                #write the row to the file
+                s = ' '.join(O) + '\n'
+                f.write(s.encode())
+
+                #progress bar
+                if step != 0:
+                    if (i % step == 0):
+                        print('.', end='', flush=True)
+
+                i+=1
