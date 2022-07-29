@@ -1,4 +1,5 @@
 import argparse
+from os import SEEK_END
 import random
 import sys
 import gzip
@@ -50,7 +51,7 @@ def get_args():
 
     return args
 
-def prune_bins(bin_h, bins, R, M):
+def prune_bins(bin_h, bins, R, M, seed):
     for bin_id in reversed(range(len(bin_h))):
 
 	# The last binn contains those variants with ACs 
@@ -181,6 +182,7 @@ def assign_bins(M, bins, legend, func_split):
             else:
                 bin_id = get_bin(bins, row_num)
 
+            #Depending on split status, either append to bin_h or to just the annotated dictionary
             target_map = bin_h
 
             if func_split:
@@ -188,6 +190,7 @@ def assign_bins(M, bins, legend, func_split):
 
             if bin_id not in target_map:
                 target_map[bin_id] = []
+                
 
             target_map[bin_id].append(row_i)
 
