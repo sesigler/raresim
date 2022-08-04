@@ -339,37 +339,3 @@ def get_expected_bins(args, func_split, fun_only, syn_only):
     else:
         bins = read_expected(args.exp_bins)
     return bins
-
-
-def probSim(args, all_rows, legend, M):
-    num_rows = len(all_rows)
-    step = int(num_rows/10)
-    i = 0
-    with gzip.open(args.output_hap, 'wb') as f:
-            #Loop through all kept rows
-            for row_i in all_rows:
-                
-                row = []
-                #Get the corresponding row from the sparse matrix
-                for col_i in range(M.row_num(row_i)):
-                    flip = random.uniform(0, 1)
-                    if legend[row_i]['prob'] == '.':
-                        row.append(M.get(row_i, col_i))
-                    elif flip > float(legend[row_i]['prob']):
-                        row.append(M.get(row_i, col_i))
-                #O will be a list of zeros, one for each column in the sparse matrix
-                O = ['0'] * M.num_cols()
-                #Assign ones in the row
-                for col_i in row:
-                    O[col_i] = '1'
-
-                #write the row to the file
-                s = ' '.join(O) + '\n'
-                f.write(s.encode())
-
-                #progress bar
-                if step != 0:
-                    if (i % step == 0):
-                        print('.', end='', flush=True)
-
-                i+=1

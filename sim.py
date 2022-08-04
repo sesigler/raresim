@@ -18,20 +18,37 @@ def main():
 
     try:
         verify_legend(legend, legend_header, M, func_split, args.prob)
-    except DifferingLengths as e:
+    except Exception as e:
         sys.exit(str(e))
-    except MissingColumn as e:
-        sys.exit(str(e))
-    except MissingProbs as e:
-        sys.exit(str(e))
+    
 
     if args.prob:
         all_rows = []
-        for row in range(M.num_rows()):
-            all_rows.append(row)
-        
-        print('Writing new haplotype file', end='', flush=True)
-        probSim(args, all_rows, legend, M)
+        num_rows = len(all_rows)
+        step = int(num_rows/10)
+        i = 0
+        with gzip.open(args.output_hap, 'wb') as f:
+                for row_i in all_rows:
+                    
+                    row = []
+                    for col_i in range(M.row_num(row_i)):
+                        flip = random.uniform(0, 1)
+                        if legend[row_i]['prob'] == '.':
+                            row.append(M.get(row_i, col_i))
+                        elif flip > float(legend[row_i]['prob']):
+                            row.append(M.get(row_i, col_i))
+                    O = ['0'] * M.num_cols()
+                    for col_i in row:
+                        O[col_i] = '1'
+
+                    s = ' '.join(O) + '\n'
+                    f.write(s.encode())
+
+                    if step != 0:
+                        if (i % step == 0):
+                            print('.', end='', flush=True)
+
+                    i+=1
 
     else:
 
@@ -69,8 +86,8 @@ def main():
         print('Writing new variant legend')
         write_legend(all_kept_rows, args.input_legend, args.output_legend)    
 
-        print()
-        print('Writing new haplotype file', end='', flush=True)
-        write_hap(all_kept_rows, args.output_hap, M)
+    print()
+    print('Writing new haplotype file', end='', flush=True)
+    write_hap(all_kept_rows, args.output_hap, M)
 
 if __name__ == '__main__': main()
