@@ -86,8 +86,8 @@ def main():
         print('Writing new variant legend')
         write_legend(all_kept_rows, args.input_legend, args.output_legend)    
 
-    print()
-    print('Writing new haplotype file', end='', flush=True)
-    write_hap(all_kept_rows, args.output_hap, M)
+        print()
+        print('Writing new haplotype file', end='', flush=True)
+        write_hap(all_kept_rows, args.output_hap, M)
 
 if __name__ == '__main__': main()
