@@ -2,12 +2,12 @@
 Python Interface for Scalable rare-variant simulations.
 
 
-##To Install:  
+## To Install:  
   $ Clone git ..  <br/>
   $ cd Path to raresim/    <br/>
   $ python3 setup.py install <br/>
 
-##Usage:
+## Usage:
 
 ### Covert haplotype files to a sparse matrix
 
@@ -24,6 +24,27 @@ optional arguments:
 $ python convert.py \
     -i lib/raresim/test/data/Simulated_80k_9.controls.haps.gz \
     -o Simulated_80k_9.controls.haps.gz.sm
+```
+
+### Extract haplotype subset
+
+```
+usage extract.py [-h] -i INPUT_FILE -o OUTPUT_FILE -n NUMBER -seed SEED
+  
+optional arguments:
+  -h, --help        show this help message and exit
+  -i INPUT_FILE     Input haplotype file path
+  -o OUTPUT_FILE    Output haplotype subset file path
+  -n NUM            Size of haplotype subset
+  --seed SEED       Random seed for replication of random sample
+```
+
+```
+$ python extract.py \
+    -i lib/raresim/test/data/Simulated_80k_9.controls.haps \
+    -o extracted_hap_subset.haps \
+    -n 20 \
+    --seed 123
 ```
 
 ### Simulate new allele frequencies
@@ -75,7 +96,7 @@ Writing new haplotype file............
 Simulations can independently be considered variants by their impact if 
 1. the legend file (`-l` option) contains a column labeled fun where functional
 variants have the value fun, and synonymous variants have the value syn.
-1. separate expected bin size files are given for functional
+2. separate expected bin size files are given for functional
 (`--functional_bins`) and synonymous (`--synonymous_bins`) variants
 
 ```
@@ -136,6 +157,32 @@ Synonymous
 Writing new variant legend
 
 Writing new haplotype file...........
+```
+
+### Prune only one type of variant
+```
+$ python convert.py \
+    -i lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.haps.gz \
+    -o chr19.block37.NFE.sim100.stratified.haps.gz.sm
+
+$ python sim.py
+    -m chr19.block37.NFE.sim100.stratified.haps.gz.sm \
+    --f_only lib/raresim/test/data/Expected_variants_functional.txt \
+    -l lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.legend \
+    -L new.legend \
+    -H new.hap.gz
+```
+
+### Prune by given probabilities
+
+Rows can be pruned allele by allele using probabilities given in the legend file.
+
+```
+$ python sim.py
+    -i testData/ProbExample.haps.sm \
+    -o new.hap.gz
+    -l testData/ProbExample.probs.legend
+    -prob
 ```
 
 Python code example: <br/>
