@@ -148,7 +148,7 @@ def read_legend(legend_file_name):
             if header == None:
                 header = A
             else:
-                legend.append( dict(zip(header,A)))
+                legend.append(dict(zip(header,A)))
 
     return header, legend
 
@@ -190,7 +190,7 @@ def get_split(args):
     return func_split, fun_only, syn_only
 
 def verify_legend(legend, legend_header, M, split, probs):
-    if split and 'fun' not in legend_header:
+    if split and 'fun' not in legend_header and not probs:
         raise MissingColumn('If variants are split by functional/synonymous ' + \
                  'the legend file must have a column named "fun" ' + \
                  'that specifies "fun" or "syn" for each site')

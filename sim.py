@@ -12,18 +12,19 @@ def main():
     except Exception as e:
         sys.exit(str(e))
 
-    func_split,fun_only,syn_only = get_split(args)
     M = sparse(None)
     M.load(args.sparse_matrix)
 
-    try:
-        verify_legend(legend, legend_header, M, func_split, args.prob)
-    except Exception as e:
-        sys.exit(str(e))
+    # try:
+    #     verify_legend(legend, legend_header, M, func_split, args.prob)
+    # except Exception as e:
+    #     sys.exit(str(e))
     
 
     if args.prob:
         all_rows = []
+        for row in range(M.num_rows()):
+            all_rows.append(row)
         num_rows = len(all_rows)
         step = int(num_rows/10)
         i = 0
