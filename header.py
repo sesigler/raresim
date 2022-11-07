@@ -76,6 +76,10 @@ def get_args():
                         action='store_true',
                         help='Rows are pruned allele by allele given a probability of removal')
 
+    parser.add_argument('--small_sample',
+                        action='store_true',
+                        help='Override error to allow for simulation of small sample size')
+
     args = parser.parse_args()
 
     return args
@@ -194,8 +198,9 @@ def verify_legend(legend, legend_header, M, split, probs):
         raise MissingColumn('If variants are split by functional/synonymous ' + \
                  'the legend file must have a column named "fun" ' + \
                  'that specifies "fun" or "syn" for each site')
+    
     if M.num_rows() != len(legend):
-        raise DifferingLengths("Lengths do not match")
+        raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
 
     if probs and 'prob' not in legend_header:
         raise MissingProbs('The legend file needs to have a "prob" column ' + \

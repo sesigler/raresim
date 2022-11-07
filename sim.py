@@ -15,10 +15,16 @@ def main():
     M = sparse(None)
     M.load(args.sparse_matrix)
 
-    # try:
-    #     verify_legend(legend, legend_header, M, func_split, args.prob)
-    # except Exception as e:
-    #     sys.exit(str(e))
+    if M.num_cols() < 10000 and not args.small_sample:
+        sys.exit("Sample sizes less than 10,000 haplotypes not supported." + \
+                 " Use --small_sample flag to override this warning." + \
+                 " The recommended method to simulate less than 10,000 haplotypes " + \
+                 "is to oversimulate the number of haplotypes and randomly down-sample to the desired sample size.")
+
+    try:
+        verify_legend(legend, legend_header, M, func_split, args.prob)
+    except Exception as e:
+        sys.exit(str(e))
     
 
     if args.prob:
