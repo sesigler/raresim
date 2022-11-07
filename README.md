@@ -179,7 +179,7 @@ Rows can be pruned allele by allele using probabilities given in the legend file
 
 ```
 $ python sim.py
-    -i testData/ProbExample.haps.sm \
+    -m testData/ProbExample.haps.sm \
     -H new.hap.gz \
     -l testData/ProbExample.probs.legend \
     -prob
