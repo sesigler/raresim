@@ -249,6 +249,7 @@ def write_legend(all_kept_rows, input_legend, output_legend):
     file_i = 0
     row_i = 0
     f = open(output_legend, 'w')
+    r = open(f'{output_legend}-pruned-variants', 'w')
     for l in open(input_legend):
         if row_i == len(all_kept_rows):
             break
@@ -260,6 +261,8 @@ def write_legend(all_kept_rows, input_legend, output_legend):
             if file_i == all_kept_rows[row_i]:
                 f.write(l)
                 row_i+=1
+            else:
+                r.write(l)
             file_i+=1
 
 
