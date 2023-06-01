@@ -1,6 +1,4 @@
-from rareSim import sparse 
 import random
-import sys
 import argparse
 
 
@@ -39,12 +37,16 @@ def main():
         columns = line.split()
     size = len(columns)
     columnsToExtract = random.sample(range(0, size), args.num)
+    otherColumns = [i for i in range(size) if i not in columnsToExtract]
     columnsToExtract.sort()
-    with open(args.output_file, 'w') as f:
-        for l in open(args.input_file):
-            cols = l.split()
+    with open(f'{args.output_file}-sample', 'w') as s:
+        with open(f'{args.output_file}-remainder', 'w') as r:
+            for l in open(args.input_file):
+                cols = l.split()
+                sampleLine = [cols[i] for i in columnsToExtract]
+                remainderLine = [cols[i] for i in otherColumns]
+                s.write(" ".join(sampleLine) + "\n")
+                r.write(" ".join(remainderLine) + "\n")
 
-            line = [cols[i] for i in columnsToExtract]
-            f.write(" ".join(line) + "\n")
 
 if __name__ == '__main__': main()
