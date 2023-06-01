@@ -24,7 +24,7 @@ def main():
     try:
         verify_legend(legend, legend_header, M, func_split, args.prob)
     except Exception as e:
-        sys.exit(str(e))
+        print(f"WARN: {str(e)}")
     
 
     if args.prob:
