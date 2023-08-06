@@ -1,12 +1,5 @@
 import argparse
 
-DEFAULT_PARAMS = {
-    'AFR': {"phi":0.1576, "omega":0.6247},
-    'EAS': {"phi":0.1191, "omega":0.6369},
-    'NFE': {"phi":0.1073, "omega":0.6539},
-    'SAS': {"phi":0.1249, "omega":0.6495} 
-}
-
 def get_args():
     parser = argparse.ArgumentParser()
 

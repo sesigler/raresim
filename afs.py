@@ -32,7 +32,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    if args.pop and args.pop not in ["EAS", "AFR", "EAS", "SAS"]:
+    if args.pop and args.pop not in ["EAS", "AFR", "NFE", "SAS"]:
         raise Exception(f"{args.pop} is not a valid population")
 
     if (not args.alpha or not args.beta or not args.b) and not args.pop:
