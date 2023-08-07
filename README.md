@@ -10,6 +10,7 @@ Python Interface for Scalable rare-variant simulations.
   - [Simulations that consider variant affect](#simulations-that-consider-variant-affect-functionalsynonymous)
   - [Prune only one type of variant](#prune-only-one-type-of-variant)
   - [Prune by given probabilities](#prune-by-given-probabilities)
+  - [Prune with protected variants](#prune-with-protected-variants)
 - [Running C Code](#running-c-code)
   - [Build](#build)
   - [Run](#run)
@@ -181,7 +182,7 @@ $ python convert.py \
     -i lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.haps.gz \
     -o chr19.block37.NFE.sim100.stratified.haps.gz.sm
 
-$ python sim.py
+$ python sim.py \
     -m chr19.block37.NFE.sim100.stratified.haps.gz.sm \
     --f_only lib/raresim/test/data/Expected_variants_functional.txt \
     -l lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.legend \
@@ -194,7 +195,7 @@ $ python sim.py
 Rows can be pruned allele by allele using probabilities given in the legend file.
 
 ```
-$ python sim.py
+$ python sim.py \
     -m testData/ProbExample.haps.sm \
     -H new.hap.gz \
     -l testData/ProbExample.probs.legend \
@@ -220,7 +221,18 @@ def main():
 if __name__ == '__main__': main()
   ```
 
-
+### Prune with protected variants
+To prune with protected variants, add a column to the legend file called "protected". Any row with a 0 in this column will be eligible for pruning. Any row with a 1 will still be counted but will not be eligible for pruning.
+```
+$ python sim.py \
+    -m testData/ProbExample.haps.sm \
+    -H new.hap.gz \
+    -l testData/ProtectiveExample.legend \
+    --keep_protected \
+    -b testData/fonlyBins.txt \
+    --small_sample \
+    -L out.test
+```
 ## Running C code
 
 ### Build
