@@ -1,15 +1,32 @@
 # raresim
 Python Interface for Scalable rare-variant simulations.
 
+## Table Of Contents
+- [Installation Steps](#to-install)
+- [Usage](#usage)
+  - [Convert haplotype files to a sparse matrix](#convert-haplotype-files-to-a-sparse-matrix)
+  - [Extract haplotype subset](#extract-haplotype-subset)
+  - [Simulate new allele frequencies](#simulate-new-allele-frequencies)
+  - [Simulations that consider variant affect](#simulations-that-consider-variant-affect-functionalsynonymous)
+  - [Prune only one type of variant](#prune-only-one-type-of-variant)
+  - [Prune by given probabilities](#prune-by-given-probabilities)
+  - [Prune with protected variants](#prune-with-protected-variants)
+- [Running C Code](#running-c-code)
+  - [Build](#build)
+  - [Run](#run)
+- [Running converted RAREsim python scripts](#running-converted-raresim-python-scripts)
+  - [afs](#afs)
+  - [nvariants](#nvariants)
+  - [Expected variants](#expected-variants)
 
 ## To Install:  
-  $ Clone git ..  <br/>
-  $ cd Path to raresim/    <br/>
-  $ python3 setup.py install <br/>
+  \$ Clone git ..  <br/>
+  \$ cd Path to raresim/    <br/>
+  \$ python3 setup.py install <br/>
 
 ## Usage:
 
-### Covert haplotype files to a sparse matrix
+### Convert haplotype files to a sparse matrix
 
 ```
 usage: convert.py [-h] -i INPUT_FILE -o OUTPUT_FILE
@@ -165,7 +182,7 @@ $ python convert.py \
     -i lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.haps.gz \
     -o chr19.block37.NFE.sim100.stratified.haps.gz.sm
 
-$ python sim.py
+$ python sim.py \
     -m chr19.block37.NFE.sim100.stratified.haps.gz.sm \
     --f_only lib/raresim/test/data/Expected_variants_functional.txt \
     -l lib/raresim/test/data/chr19.block37.NFE.sim100.stratified.legend \
@@ -178,7 +195,7 @@ $ python sim.py
 Rows can be pruned allele by allele using probabilities given in the legend file.
 
 ```
-$ python sim.py
+$ python sim.py \
     -m testData/ProbExample.haps.sm \
     -H new.hap.gz \
     -l testData/ProbExample.probs.legend \
@@ -204,7 +221,18 @@ def main():
 if __name__ == '__main__': main()
   ```
 
-
+### Prune with protected variants
+To prune with protected variants, add a column to the legend file called "protected". Any row with a 0 in this column will be eligible for pruning. Any row with a 1 will still be counted but will not be eligible for pruning.
+```
+$ python sim.py \
+    -m testData/ProbExample.haps.sm \
+    -H new.hap.gz \
+    -l testData/ProtectiveExample.legend \
+    --keep_protected \
+    -b testData/fonlyBins.txt \
+    --small_sample \
+    -L out.test
+```
 ## Running C code
 
 ### Build
@@ -221,4 +249,57 @@ gunzip test/data/Simulated_80k_9.controls.haps.gz
 ./read \
     -i ../test/data/Simulated_80k_9.controls.haps \
     -o Simulated_80k_9.controls.haps.dat \
+```
+## Running Converted RAREsim python scripts
+This repository contains scripts (functions) from the RAREsim R project that have been translated into python. Accepted default populations are:
+- EAS - East Asian
+- AFR - African
+- NFE - Non-Finnish European
+- SAS - South Asian
+
+### afs
+Calculate the frequencies with which you expect variants to appear in each MAC bin
+Rows can be pruned allele by allele using probabilities given in the legend file.
+```
+$ python afs.py
+    --pop EAS
+    --mac testData/mac_bins.csv
+    -o <output file>
+```
+
+Alternatively, if you know your desired alpha, beta, and b parameters, you can also use those in place of the defaults for a given population.
+```
+$ python afs.py
+    --alpha 1.5
+    --beta -.25
+    -b .25
+    --mac testData/mac_bins.csv
+    -o <output file>
+```
+
+### nvariants
+Calculate the total number of expected variants. This script simply outputs it's calculated value to the console, but if you want this to be written to a file you can add ` > output.txt` to the end of the bash command to have it write the value to a file
+
+```
+$ python nvariants.py
+    -- pop AFR
+    -N 15000
+```
+
+Alternatively, you may provide your own omega and phi values if you have them.
+```
+$ python nvariants.py
+    --omega .15
+    --phi .65
+    -N 15000
+```
+
+### Expected variants
+Calculate the number of expected variants per MAC bin based on the outputs from the afs and nvariant functions.
+Rows can be pruned allele by allele using probabilities given in the legend file.
+```
+$ python expected_variants.py
+    -N <output from nvariants script>
+    --props <output from afs script>
+    -o <output file>
 ```

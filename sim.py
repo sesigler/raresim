@@ -87,7 +87,7 @@ def main():
         print('New allele frequency distribution:')
         print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only)
 
-        all_kept_rows = get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, args.z)
+        all_kept_rows = get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, args.z, args.keep_protected, legend)
         
         print()
         print('Writing new variant legend')

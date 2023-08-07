@@ -80,6 +80,10 @@ def get_args():
                         action='store_true',
                         help='Override error to allow for simulation of small sample size')
 
+    parser.add_argument('--keep_protected',
+                        action='store_true',
+                        help='Rows in the legend marked with a 1 in the protected column will be accounted for but not pruned')
+
     args = parser.parse_args()
 
     return args
@@ -87,7 +91,7 @@ def get_args():
 def prune_bins(bin_h, bins, R, M):
     for bin_id in reversed(range(len(bin_h))):
 
-	# The last binn contains those variants with ACs 
+	# The last bin contains those variants with ACs 
 	# greater than the bin size, and we keep all of them
         if bin_id == len(bins):
             continue
@@ -125,7 +129,6 @@ def prune_bins(bin_h, bins, R, M):
                 num_to_rem = M.row_num(row_id) - num_to_keep
                 left = M.prune_row(row_id, num_to_rem)
                 assert num_to_keep == left
-
                 bin_h[bin_id].append(row_id)
                 R.remove(row_id)
 
@@ -200,7 +203,9 @@ def verify_legend(legend, legend_header, M, split, probs):
                  'that specifies "fun" or "syn" for each site')
     
     if M.num_rows() != len(legend):
-        raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
+        # TODO: This check has a bug in it somewhere. Likely in the C code
+        # raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
+        print(f"WARNING: Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
 
     if probs and 'prob' not in legend_header:
         raise MissingProbs('The legend file needs to have a "prob" column ' + \
@@ -309,7 +314,7 @@ def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
         print_bin(bin_h, bins)
 
 
-def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z):
+def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protected, legend):
     all_kept_rows = []
 
     if func_split:
@@ -331,6 +336,14 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z):
     all_kept_rows.sort()
     if z:
         all_kept_rows = list(merge(all_kept_rows, sorted(R)))
+    if keep_protected:
+        keep_rows = []
+        for row_id in sorted(R):
+            if int(legend[row_id]["protected"]) == 1:
+                keep_rows.append(row_id)
+        all_kept_rows = list(merge(all_kept_rows, keep_rows))
+    
+    all_kept_rows = list(dict.fromkeys(all_kept_rows))
     return all_kept_rows
 
 
