@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+
+/*
+Following libraries are broken on winddows:
 #include <sysexits.h>
 #include <err.h>
 #include <getopt.h>
+*/
+
 #include <ctype.h>
 #include <zlib.h>
 
